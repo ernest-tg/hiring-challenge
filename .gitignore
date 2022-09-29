@@ -1,3 +1,11 @@
+# We don't want to version the dataset with git
+/dataset/*/
+
+/external/*/
+
+############# Default git ignore for python projects
+*~
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
