@@ -2,6 +2,7 @@
 /dataset/*/
 
 /external/*/
+/.vscode/
 
 ############# Default git ignore for python projects
 *~
