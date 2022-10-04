@@ -3,6 +3,7 @@
 
 /external/*/
 /.vscode/
+/lightning_logs/
 
 ############# Default git ignore for python projects
 *~

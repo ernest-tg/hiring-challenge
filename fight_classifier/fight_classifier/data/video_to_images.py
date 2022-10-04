@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import List
 
-import fire
 import pandas as pd
 from PIL import Image
 import skvideo.io

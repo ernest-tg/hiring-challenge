@@ -25,6 +25,43 @@ def naive_split(data, val_size=0.1):
         'train': train_data,
         'val': val_data,
     }
-    
-def split_based_on_column(data, col_name, val_size=0.1):
-    pass
+
+
+def split_based_on_column(
+            data,
+            col_name: str,
+            min_val_size: int | float = 0.1,
+            max_val_size: int | float = 0.2
+):
+    min_val_rows = determine_split_size(
+        data=data, split_size_param=min_val_size)
+    max_val_rows = determine_split_size(
+        data=data, split_size_param=max_val_size)
+
+    group_counts = data.groupby([col_name])[col_name].count()
+    n_groups = len(group_counts)
+
+    shuffled_group_ids = np.arange(n_groups)
+    np.random.shuffle(shuffled_group_ids)
+
+    val_groups = []
+    current_n_rows = 0
+    for group_id in shuffled_group_ids:
+        if current_n_rows >= min_val_rows:
+            break
+        group_col = group_counts.index[group_id]
+        n_rows_in_group = group_counts.iloc[group_id]
+        if current_n_rows + n_rows_in_group < max_val_rows:
+            val_groups.append(group_col)
+            current_n_rows += n_rows_in_group
+
+    val_mask = data[col_name].isin(val_groups)
+    train_data = data[~val_mask]
+    val_data = data[val_mask]
+    if not (min_val_rows <= current_n_rows <= max_val_rows):
+        raise ValueError(
+            "Could not find a split of the right size")
+    return {
+        'train': train_data,
+        'val': val_data,
+    }
