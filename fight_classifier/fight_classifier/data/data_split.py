@@ -31,8 +31,11 @@ def split_based_on_column(
             data,
             col_name: str,
             min_val_size: int | float = 0.1,
-            max_val_size: int | float = 0.2
+            max_val_size: int | float = 0.2,
+            random_seed: int | None = None,
 ):
+    if random_seed is not None:
+        np.random.seed(random_seed)
     min_val_rows = determine_split_size(
         data=data, split_size_param=min_val_size)
     max_val_rows = determine_split_size(

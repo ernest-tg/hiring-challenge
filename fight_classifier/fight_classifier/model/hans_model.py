@@ -33,4 +33,7 @@ class SmallCnnImageClassifier(torch.nn.Module):
     def forward(self, x):
         patches_probas = self.patches_probas(x=x)
         images_probas = torch.mean(patches_probas, dim=(2, 3))
-        return images_probas
+        return {
+            'patches_probas': patches_probas,
+            'image_probas': images_probas,
+        }

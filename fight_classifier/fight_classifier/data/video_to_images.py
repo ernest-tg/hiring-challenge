@@ -48,7 +48,7 @@ def save_videos_dataset_as_frames(
         flat_video_rel_path = video_row.video_path.replace('/', '_')
         # e.g. 'fights_newfi12'
         frame_name_prefix = os.path.splitext(flat_video_rel_path)[0]
-        frame_name_pattern = frame_name_prefix + '_{}.jpeg'
+        frame_name_pattern = frame_name_prefix + '_{}.png'
         frame_path_pattern = os.path.join(frames_dir, frame_name_pattern)
         
         frames_paths = save_video_as_frames(

@@ -42,18 +42,18 @@ class ImageDataset(Dataset):
         image = Image.open(image_path)
         image_np = np.asarray(image)
 
-        transform = A.Compose(
+        augmentation_transform = A.Compose(
             [
                 A.SmallestMaxSize(max_size=self.resize_size),
-                # A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
                 A.RandomCrop(height=self.crop_size, width=self.crop_size),
-                # A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
-                # A.RandomBrightnessContrast(p=0.5),
-                A.Normalize(mean=self.mean, std=self.std),
-                ToTensorV2(),
+                A.RandomBrightnessContrast(
+                    brightness_limit=0.3, contrast_limit=0.2, p=1.0),
+                A.InvertImg(always_apply=False, p=0.5),
             ]
         )
-        augmented_image = transform(image=image_np)["image"]
+        augmented_image = augmentation_transform(image=image_np)["image"]
+        normalized_image = A.Normalize(mean=self.mean, std=self.std)(image=augmented_image)["image"]
+
 
         # TODO: replace with SmallestMaxSize --> random crop
         # resized_image = F.resize(image, size=self.resize_size)
@@ -70,8 +70,8 @@ class ImageDataset(Dataset):
             # images may have different shapes, which would be a problem when
             # batching. This resized image is the closest thing to the original
             # image which can be batched.
-            # 'image_raw': np.asarray(F.resize(image, size=[self.resize_size])),
-            'image': augmented_image,
+            'image_augmented': ToTensorV2()(image=augmented_image)["image"],
+            'input': ToTensorV2()(image=normalized_image)["image"],
             'groundtruth': groundtruth,
         }
 
@@ -99,7 +99,8 @@ class ImageDataModule(pl.LightningDataModule):
     def setup(self, stage: str | None = None) -> None:
         split = split_based_on_column(
             data=self.image_df, col_name=self.split_coherence_col,
-            min_val_size=0.1, max_val_size=0.15
+            min_val_size=0.1, max_val_size=0.15,
+            random_seed=self.random_seed,
         )
         self.train_dataset = ImageDataset(
             split['train'],
@@ -116,15 +117,22 @@ class ImageDataModule(pl.LightningDataModule):
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            shuffle=True)
+            shuffle=True,
+            num_workers=10,)
 
     def val_dataloader(self):
         # TODO: later, differentiate from test by adding transforms here but
         # not on test
-        return DataLoader(self.train_dataset, batch_size=self.batch_size)
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            num_workers=10,)
 
     def test_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size)
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            num_workers=10,)
 
     def predict_dataloader(self):
         return self.test_dataloader()

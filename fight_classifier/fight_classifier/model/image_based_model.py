@@ -5,8 +5,11 @@ import torchmetrics
 from torchvision.models import mobilenet_v3_large, MobileNet_V3_Large_Weights
 from torchvision.models.feature_extraction import create_feature_extractor
 
+from fight_classifier.visualization.patch_classification import viz_patch_heatmap
+
 # TODO: could I set the dataset's preprocess from the model inside
 #    the torch lightning module?
+
 
 class ImageBasedVideoClassifier(torch.nn.Module):
     def __init__(self, image_classifier):
@@ -20,24 +23,6 @@ class ImageBasedVideoClassifier(torch.nn.Module):
                 Batch of videos, of shape (batch_size, n_frames, 3, h, w)
         """
         batch_size, n_frames, _, h, w = x.shape
-
-
-class ProjFromLogits(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        base_model_weights = MobileNet_V3_Large_Weights.DEFAULT
-        self.base_model = mobilenet_v3_large(
-            weights=base_model_weights)
-        # TODO: can we get this 1000 from the weights?
-        self.proj_layer = torch.nn.Linear(
-            in_features=1000, out_features=2, bias=True)
-
-    def forward(self, x):
-        base_model_logits = self.base_model(x)
-        logits = self.proj_layer(base_model_logits)
-        probas = softmax(logits, dim=1)
-        return probas
-
 
 class ProjFromFeatures(torch.nn.Module):
     def __init__(self):
@@ -56,7 +41,9 @@ class ProjFromFeatures(torch.nn.Module):
         base_features = self.feature_extractor(x)['flatten']
         logits = self.proj_layer(base_features)
         probas = softmax(logits, dim=1)
-        return probas
+        return {
+            'image_probas': probas,
+        }
 
     def trainable_parameters(self):
         return self.proj_layer.parameters()
@@ -69,18 +56,34 @@ class ImageClassifierModule(pl.LightningModule):
         self.accuracy = torchmetrics.Accuracy()
 
     def basic_step(self, batch, batch_idx, split_name: str):
-        images = batch['image']
+        images = batch['input']
+        # self.log('raw_images', batch['image_raw'])
+        tb_logger: torch.utils.tensorboard.writer.SummaryWriter = self.logger.experiment
+        if batch_idx % 20 == 0:
+            tb_logger.add_image(
+                'augmented_images', batch['image_augmented'][0], global_step=batch_idx)
+            tb_logger.add_image(
+                'input_images', images[0], global_step=batch_idx)
         groundtruth = batch['groundtruth'].long()
 
-        probas = self.classifier(images)
+        classifier_output = self.classifier(images)
+        probas = classifier_output['image_probas']
+        if 'patches_probas' in classifier_output and batch_idx % 20 == 0:
+            patches_probas_viz = viz_patch_heatmap(
+                batch['image_augmented'][0],
+                classifier_output['patches_probas'][0, 1].detach(),
+            )
+            tb_logger.add_image(
+                'patches_probas', patches_probas_viz, global_step=batch_idx)
+
         # loss = torch.nn.functional.cross_entropy(input=logits, target=groundtruth)
         loss = nll_loss(
             input=torch.log(probas),
             target=groundtruth,
             reduction='sum')
         self.accuracy(probas, groundtruth)
-        self.log(f'{split_name}_accuracy', self.accuracy)
-        self.log(f'{split_name}_loss', loss)
+        self.log(f'{split_name}_accuracy', self.accuracy, prog_bar=True)
+        self.log(f'{split_name}_loss', loss, prog_bar=True)
         return loss
 
     def training_step(self, batch, batch_idx):

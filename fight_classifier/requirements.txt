@@ -14,6 +14,7 @@ asttokens==2.0.8
 async-timeout==4.0.2
 asyncssh==2.12.0
 atpublic==3.1.1
+attrdict==2.0.1
 attrs==22.1.0
 autopep8==1.7.0
 backcall==0.2.0
@@ -59,7 +60,7 @@ dvclive==0.11.0
 entrypoints==0.4
 executing==1.1.0
 fastjsonschema==2.16.2
--e git+ssh://git@github.com/ernest-tg/hiring-challenge.git@08e2e6690d1c8e30baf0c8ba3f3ffcdfe12ddb21#egg=fight_classifier&subdirectory=fight_classifier
+-e git+ssh://git@github.com/ernest-tg/hiring-challenge.git@e706f4efd1ec6968817e28561f77d34fdbf316f4#egg=fight_classifier&subdirectory=fight_classifier
 filelock==3.8.0
 fire==0.4.0
 flake8==5.0.4
@@ -128,6 +129,7 @@ pathspec==0.9.0
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==9.2.0
+pkg_resources==0.0.0
 pkginfo==1.8.3
 platformdirs==2.5.2
 prometheus-client==0.14.1
@@ -194,9 +196,11 @@ tinycss2==1.1.1
 toml==0.10.2
 tomli==2.0.1
 tomlkit==0.11.5
-torch==1.12.1
+torch==1.12.1+cu116
+torchaudio==0.12.1+cu116
+torchcam==0.3.2
 torchmetrics==0.9.3
-torchvision==0.13.1
+torchvision==0.13.1+cu116
 tornado==6.2
 tqdm==4.64.1
 traitlets==5.4.0
