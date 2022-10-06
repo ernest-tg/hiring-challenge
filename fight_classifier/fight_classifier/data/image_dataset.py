@@ -127,25 +127,25 @@ class ImageDataModule(pl.LightningDataModule):
         self.image_augmentation = image_augmentation
 
     def setup(self, stage: str | None = None) -> None:
-        split = split_based_on_column(
+        self.split = split_based_on_column(
             data=self.image_df, col_name=self.split_coherence_col,
             min_val_size=0.1, max_val_size=0.15,
             random_seed=self.random_seed,
         )
         self.train_dataset = ImageDataset(
-            split['train'],
+            self.split['train'],
             image_path_col=self.image_path_col,
             groundtruth_col=self.groundtruth_col,
             image_augmentation=self.image_augmentation,
             **self.preprocess_kwargs)
         self.val_dataset = ImageDataset(
-            split['val'],
+            self.split['val'],
             image_path_col=self.image_path_col,
             groundtruth_col=self.groundtruth_col,
             image_augmentation=self.image_augmentation,
             **self.preprocess_kwargs)
         self.test_dataset = ImageDataset(
-            split['val'],
+            self.split['val'],
             image_path_col=self.image_path_col,
             groundtruth_col=self.groundtruth_col,
             image_augmentation=False,
