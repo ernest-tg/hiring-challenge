@@ -159,8 +159,6 @@ class ImageDataModule(pl.LightningDataModule):
             num_workers=10,)
 
     def val_dataloader(self):
-        # TODO: later, differentiate from test by adding transforms here but
-        # not on test
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
