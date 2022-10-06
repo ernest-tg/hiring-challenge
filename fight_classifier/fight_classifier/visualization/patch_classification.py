@@ -3,6 +3,8 @@ import numpy as np
 import seaborn as sns
 import torch
 
+from fight_classifier.visualization import chw_array_from_fig
+
 
 def viz_patch_heatmap(img, probas):
     img_gray = torch.mean(img, dim=0, dtype=torch.float)
@@ -24,7 +26,5 @@ def viz_patch_heatmap(img, probas):
         extent=hmax.get_xlim()+hmax.get_ylim(),
         zorder=1,
     )
-    fig.canvas.draw()
-    data = np.array(fig.canvas.renderer.buffer_rgba())
-    plt.close()
-    return np.transpose(data, axes=(2, 0, 1))
+    fig_as_array = chw_array_from_fig(fig=fig)
+    return fig_as_array
